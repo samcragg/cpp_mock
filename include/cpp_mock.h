@@ -291,6 +291,18 @@ namespace cpp_mock
 
                 return *this;
             }
+
+            template <class E, class... ConstructorArgs>
+            method_action_builder& Throw(ConstructorArgs&&... args)
+            {
+                E exception(std::forward<ConstructorArgs>(args)...);
+                _action->action = [=](const Args& ...) -> R
+                {
+                    throw exception;
+                };
+
+                return *this;
+            }
         private:
             method_action<R, Args...>* _action;
             std::vector<R> _values;

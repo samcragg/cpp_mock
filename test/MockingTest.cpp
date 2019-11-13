@@ -55,6 +55,15 @@ TEST(MockingTest, TestArrangeReturn)
     EXPECT_EQ(2, result3);
 }
 
+TEST(MockingTest, TestArrangeThrow)
+{
+    MockExample example;
+
+    When(example.GetInteger).Throw<std::invalid_argument>("args");
+
+    EXPECT_THROW(example.GetInteger(), std::invalid_argument);
+}
+
 TEST(MockingTest, TestMultipleArrange)
 {
     MockExample example;
