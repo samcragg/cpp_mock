@@ -85,16 +85,82 @@ namespace cpp_mock
             std::size_t index;
         };
 
-        template <class R, class F, class Tuple, std::size_t... I>
-        R apply(const F& func, const Tuple& args, index_sequence<I...>)
+        struct ignore_arg
         {
-            return func(std::get<I>(args)...);
+            explicit ignore_arg(const void*)
+            {
+            }
+
+            template <class T>
+            void save(const T&)
+            {
+            }
+        };
+
+        template <class T>
+        struct save_arg
+        {
+            explicit save_arg(T* arg) :
+                _arg(arg)
+            {
+            }
+
+            void save(const T& value)
+            {
+                *_arg = value;
+            }
+
+            T* _arg;
+        };
+
+        template <class T, typename = void>
+        struct sync_arg_save
+        {
+            using type = ignore_arg;
+        };
+
+        template <class T>
+        struct sync_arg_save<T&, typename std::enable_if<!std::is_const<T>::value>::type>
+        {
+            using type = save_arg<T>;
+        };
+
+        template <std::size_t I, class Args, class ArgSetters>
+        class sync_arg
+        {
+        public:
+            using element_type = typename std::tuple_element<I, Args>::type;
+
+            sync_arg(Args& args, ArgSetters& setters) :
+                _args(&args),
+                _setters(&setters)
+            {
+            }
+
+            ~sync_arg()
+            {
+                std::get<I>(*_setters).save(get());
+            }
+
+            element_type& get()
+            {
+                return std::get<I>(*_args);
+            }
+        private:
+            Args* _args;
+            ArgSetters* _setters;
+        };
+
+        template <class R, class F, class Args, class ArgSetters, std::size_t... I>
+        R invoke_indexes(const F& func, Args& args, ArgSetters& setters, index_sequence<I...>)
+        {
+            return func(sync_arg<I, Args, ArgSetters>(args, setters).get()...);
         }
 
-        template <class R, class F, class Tuple>
-        R invoke(const Tuple& tuple, F&& func)
+        template <class R, class F, class Args, class ArgSetters>
+        R invoke(F&& func, Args& args, ArgSetters& setters)
         {
-            return apply<R>(func, tuple, typename make_index_sequence<std::tuple_size<Tuple>::value>::type{});
+            return invoke_indexes<R>(func, args, setters, typename make_index_sequence<std::tuple_size<Args>::value>::type{});
         }
     }
 
@@ -194,7 +260,7 @@ namespace cpp_mock
     struct method_action
     {
         std::shared_ptr<matching::method_arguments_matcher<std::tuple<Args...>>> matcher;
-        std::function<R(const Args& ...)> action;
+        std::function<R(Args& ...)> action;
     };
 
     static matching::any_matcher _;
@@ -271,7 +337,7 @@ namespace cpp_mock
                 return *this;
             }
 
-            method_action_builder& Do(std::function<R(const Args& ...)> function)
+            method_action_builder& Do(std::function<R(Args& ...)> function)
             {
                 _action->action = std::move(function);
                 return *this;
@@ -433,6 +499,7 @@ namespace cpp_mock
 }
 
 #define MAKE_FORWARD(arg) std::forward<decltype(arg)>(arg)
+#define MAKE_SETTER(arg) ::cpp_mock::invoking::sync_arg_save<decltype(arg)>::type(&arg)
 
 #define MOCK_METHOD_IMPL(Ret, Name, Args, Specs, NameArgs, Transform, ...) \
     Ret Name(NameArgs Args) Specs \
@@ -444,7 +511,8 @@ namespace cpp_mock
         { \
             if (it->matcher->matches(args)) \
             { \
-                return ::cpp_mock::invoking::invoke<Ret>(args, it->action); \
+                auto setters = std::make_tuple( Transform(MAKE_SETTER, __VA_ARGS__) ); \
+                return ::cpp_mock::invoking::invoke<Ret>(it->action, args, setters); \
             } \
         } \
         return Ret(); \
