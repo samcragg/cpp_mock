@@ -1,3 +1,5 @@
 bin
 obj
 TestResults.xml
+.vs
+*.vcxproj.user
