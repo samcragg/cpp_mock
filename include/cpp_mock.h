@@ -68,6 +68,8 @@ namespace cpp_mock
         template <class T>
         struct return_values
         {
+            using storage_type = std::vector<T>;
+
             template <class... Args>
             T operator()(Args&&...)
             {
@@ -81,7 +83,7 @@ namespace cpp_mock
                 }
             }
 
-            std::vector<T> values;
+            storage_type values;
             std::size_t index;
         };
 
@@ -304,10 +306,10 @@ namespace cpp_mock
                 {
                     if (_values.empty())
                     {
-                        _values.emplace_back();
+                        _values.push_back(R());
                     }
 
-                    _action->action = invoking::return_values<R> { std::move(_values) };
+                    _action->action = invoking::return_values<R> { std::move(_values), 0u };
                 }
 
                 if (_action->matcher == nullptr)
@@ -371,7 +373,7 @@ namespace cpp_mock
             }
         private:
             method_action<R, Args...>* _action;
-            std::vector<R> _values;
+            typename invoking::return_values<R>::storage_type _values;
         };
 
         template <class... Args>
@@ -482,7 +484,7 @@ namespace cpp_mock
         template <class R, class... Args>
         method_action_builder<R, Args...> add_action(std::vector<method_action<R, Args...>>& actions)
         {
-            actions.emplace_back(method_action<R, Args...>{});
+            actions.emplace_back(method_action<R, Args...>());
             return method_action_builder<R, Args...>(&actions.back());
         }
 
