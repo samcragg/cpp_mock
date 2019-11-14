@@ -1,7 +1,4 @@
 CXXFLAGS=-std=c++11 -Wall -Wextra -O0 -g -I . -I ../include -pthread
-SRC= \
-	main.cpp \
-	MockingTest.cpp \
 
 UNIT_TESTS = bin/unit_tests
 test: $(UNIT_TESTS)
@@ -20,3 +17,8 @@ obj/MockingTest.o: MockingTest.cpp ../include/cpp_mock.h
 $(UNIT_TESTS): obj/gtest.o obj/main.o obj/MockingTest.o
 	@mkdir -p bin
 	g++ $^ $(CXXFLAGS) -o $@
+
+.PHONY: clean
+clean:
+	rm -rf obj/*.o
+	rm -f $(UNIT_TESTS)
