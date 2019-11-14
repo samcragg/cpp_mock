@@ -498,6 +498,9 @@ namespace cpp_mock
     }
 }
 
+// Required for VC++ to expand variadic macro arguments correctly
+#define EXPAND_MACRO(macro, ...) macro
+
 #define MAKE_FORWARD(arg) std::forward<decltype(arg)>(arg)
 #define MAKE_SETTER(arg) ::cpp_mock::invoking::sync_arg_save<decltype(arg)>::type(&arg)
 
@@ -505,13 +508,14 @@ namespace cpp_mock
     Ret Name(NameArgs Args) Specs \
     { \
         Name ## _Invocations.emplace_back(std::make_tuple( \
-            Transform(MAKE_FORWARD, __VA_ARGS__))); \
+            EXPAND_MACRO(Transform(MAKE_FORWARD, __VA_ARGS__)))); \
         auto& args = Name ## _Invocations.back(); \
         for (auto it = Name ## _Actions.rbegin(); it != Name ## _Actions.rend(); ++it) \
         { \
             if (it->matcher->matches(args)) \
             { \
-                auto setters = std::make_tuple( Transform(MAKE_SETTER, __VA_ARGS__) ); \
+                auto setters = std::make_tuple( \
+                    EXPAND_MACRO(Transform(MAKE_SETTER, __VA_ARGS__))); \
                 return ::cpp_mock::invoking::invoke<Ret>(it->action, args, setters); \
             } \
         } \
@@ -521,26 +525,26 @@ namespace cpp_mock
     mutable ::cpp_mock::mocking::mock_method_types<Ret Args>::record_t Name ## _Invocations;
 
 #define NAME_ARGS1(type) type a
-#define NAME_ARGS2(type, ...) type b, NAME_ARGS1(__VA_ARGS__)
-#define NAME_ARGS3(type, ...) type c, NAME_ARGS2(__VA_ARGS__)
-#define NAME_ARGS4(type, ...) type d, NAME_ARGS3(__VA_ARGS__)
-#define NAME_ARGS5(type, ...) type e, NAME_ARGS4(__VA_ARGS__)
-#define NAME_ARGS6(type, ...) type f, NAME_ARGS5(__VA_ARGS__)
-#define NAME_ARGS7(type, ...) type g, NAME_ARGS6(__VA_ARGS__)
-#define NAME_ARGS8(type, ...) type h, NAME_ARGS7(__VA_ARGS__)
-#define NAME_ARGS9(type, ...) type i, NAME_ARGS8(__VA_ARGS__)
-#define NAME_ARGS10(type, ...) type j, NAME_ARGS9(__VA_ARGS__)
+#define NAME_ARGS2(type, ...) type b, EXPAND_MACRO(NAME_ARGS1(__VA_ARGS__))
+#define NAME_ARGS3(type, ...) type c, EXPAND_MACRO(NAME_ARGS2(__VA_ARGS__))
+#define NAME_ARGS4(type, ...) type d, EXPAND_MACRO(NAME_ARGS3(__VA_ARGS__))
+#define NAME_ARGS5(type, ...) type e, EXPAND_MACRO(NAME_ARGS4(__VA_ARGS__))
+#define NAME_ARGS6(type, ...) type f, EXPAND_MACRO(NAME_ARGS5(__VA_ARGS__))
+#define NAME_ARGS7(type, ...) type g, EXPAND_MACRO(NAME_ARGS6(__VA_ARGS__))
+#define NAME_ARGS8(type, ...) type h, EXPAND_MACRO(NAME_ARGS7(__VA_ARGS__))
+#define NAME_ARGS9(type, ...) type i, EXPAND_MACRO(NAME_ARGS8(__VA_ARGS__))
+#define NAME_ARGS10(type, ...) type j, EXPAND_MACRO(NAME_ARGS9(__VA_ARGS__))
 
 #define TRANSFORM1(Call, x) Call(x)
-#define TRANSFORM2(Call, x, ...) Call(x), TRANSFORM1(Call, __VA_ARGS__)
-#define TRANSFORM3(Call, x, ...) Call(x), TRANSFORM2(Call, __VA_ARGS__)
-#define TRANSFORM4(Call, x, ...) Call(x), TRANSFORM3(Call, __VA_ARGS__)
-#define TRANSFORM5(Call, x, ...) Call(x), TRANSFORM4(Call, __VA_ARGS__)
-#define TRANSFORM6(Call, x, ...) Call(x), TRANSFORM5(Call, __VA_ARGS__)
-#define TRANSFORM7(Call, x, ...) Call(x), TRANSFORM6(Call, __VA_ARGS__)
-#define TRANSFORM8(Call, x, ...) Call(x), TRANSFORM7(Call, __VA_ARGS__)
-#define TRANSFORM9(Call, x, ...) Call(x), TRANSFORM8(Call, __VA_ARGS__)
-#define TRANSFORM10(Call, x, ...) Call(x), TRANSFORM9(Call, __VA_ARGS__)
+#define TRANSFORM2(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM1(Call, __VA_ARGS__))
+#define TRANSFORM3(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM2(Call, __VA_ARGS__))
+#define TRANSFORM4(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM3(Call, __VA_ARGS__))
+#define TRANSFORM5(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM4(Call, __VA_ARGS__))
+#define TRANSFORM6(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM5(Call, __VA_ARGS__))
+#define TRANSFORM7(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM6(Call, __VA_ARGS__))
+#define TRANSFORM8(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM7(Call, __VA_ARGS__))
+#define TRANSFORM9(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM8(Call, __VA_ARGS__))
+#define TRANSFORM10(Call, x, ...) Call(x), EXPAND_MACRO(TRANSFORM9(Call, __VA_ARGS__))
 
 // We need to handle () and (int) differently, however, when they get passed in
 // via __VA_ARG__ then it looks like we received a single parameter for both
@@ -548,7 +552,7 @@ namespace cpp_mock
 // detect the difference between 'type a' and 'a'
 #define CAT(a, b) a ## b
 #define GET_SECOND_ARG(a, b, ...) b
-#define DEFINE_EXISTS(...) GET_SECOND_ARG(__VA_ARGS__, TRUE)
+#define DEFINE_EXISTS(...) EXPAND_MACRO(GET_SECOND_ARG(__VA_ARGS__, TRUE))
 #define IS_TYPE_MISSING(x) DEFINE_EXISTS(CAT(TOKEN_IS_EMPTY_, x))
 #define TOKEN_IS_EMPTY_a ignored, FALSE
 #define GET_METHOD(method, suffix) CAT(method, suffix)
@@ -570,7 +574,7 @@ namespace cpp_mock
 
 #define GET_NTH_ARG(a, b, c, d, e, f, g, h, i, j, N, ...) N
 
-#define GET_MOCK_METHOD(...) GET_NTH_ARG(__VA_ARGS__, \
+#define GET_MOCK_METHOD(...) EXPAND_MACRO(GET_NTH_ARG(__VA_ARGS__, \
     MOCK_METHOD_10, \
     MOCK_METHOD_9, \
     MOCK_METHOD_8, \
@@ -580,13 +584,13 @@ namespace cpp_mock
     MOCK_METHOD_4, \
     MOCK_METHOD_3, \
     MOCK_METHOD_2, \
-    MOCK_METHOD_1)
+    MOCK_METHOD_1))
 
 #define INVALID_METHOD(...) static_assert(false, "Invalid usage. Call with return type, name, argument types and, optionally, specifiers.");
 #define MOCK_METHOD_SPEC(Ret, Name, Args, Spec) GET_MOCK_METHOD Args (Ret, Name, Args, Spec)
 #define MOCK_METHOD(Ret, Name, Args) MOCK_METHOD_SPEC(Ret, Name, Args, override)
 
-#define MockMethod(...) GET_NTH_ARG(__VA_ARGS__, \
+#define MockMethod(...) EXPAND_MACRO(EXPAND_MACRO(GET_NTH_ARG(__VA_ARGS__, \
     INVALID_METHOD, \
     INVALID_METHOD, \
     INVALID_METHOD, \
@@ -596,7 +600,7 @@ namespace cpp_mock
     MOCK_METHOD_SPEC, \
     MOCK_METHOD, \
     INVALID_METHOD, \
-    INVALID_METHOD)(__VA_ARGS__)
+    INVALID_METHOD))(__VA_ARGS__))
 
 #define MockConstMethod(Ret, Name, Args) MockMethod(Ret, Name, Args, const override)
 #define When(call_method) ::cpp_mock::mocking::add_action(call_method ## _Actions)
