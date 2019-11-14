@@ -561,7 +561,7 @@ namespace cpp_mock
 #define NOOP(...)
 #define MOCK_METHOD_IS_SINGLE_FALSE(Ret, Name, Args, Specs) MOCK_METHOD_IMPL(Ret, Name, Args, Specs, NOOP, NOOP)
 #define MOCK_METHOD_IS_SINGLE_TRUE(Ret, Name, Args, Specs) MOCK_METHOD_IMPL(Ret, Name, Args, Specs, NAME_ARGS1, TRANSFORM1, a)
-#define HANDLE_EMPTY_TYPE(type) GET_METHOD(MOCK_METHOD_IS_SINGLE_, IS_TYPE_MISSING(type a))
+#define HANDLE_EMPTY_TYPE(...) GET_METHOD(MOCK_METHOD_IS_SINGLE_, IS_TYPE_MISSING(__VA_ARGS__ a))
 
 #define MOCK_METHOD_1(Ret, Name, Args, Specs) HANDLE_EMPTY_TYPE Args (Ret, Name, Args, Specs)
 #define MOCK_METHOD_2(Ret, Name, Args, Specs) MOCK_METHOD_IMPL(Ret, Name, Args, Specs, NAME_ARGS2, TRANSFORM2, b, a)
