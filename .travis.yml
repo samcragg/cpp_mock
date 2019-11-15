@@ -1,0 +1,6 @@
+language: cpp
+dist: bionic
+os:
+- linux
+script:
+- make -C test
