@@ -1,5 +1,7 @@
 # cpp_mock
 
+![Travis Build Status](https://travis-ci.com/samcragg/cpp_mock.svg?branch=master)
+
 `cpp_mock` is a simple to use and install C++ library to allow the mocking of
 classes. It overrides virtual methods to allow them to be easily setup and,
 optionally, verified in a unit test.
