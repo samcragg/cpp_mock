@@ -154,13 +154,13 @@ namespace cpp_mock
         };
 
         template <class R, class F, class Args, class ArgSetters, std::size_t... I>
-        R invoke_indexes(const F& func, Args& args, ArgSetters& setters, index_sequence<I...>)
+        static R invoke_indexes(const F& func, Args& args, ArgSetters& setters, index_sequence<I...>)
         {
             return func(sync_arg<I, Args, ArgSetters>(args, setters).get()...);
         }
 
         template <class R, class F, class Args, class ArgSetters>
-        R invoke(F&& func, Args& args, ArgSetters& setters)
+        static R invoke(F&& func, Args& args, ArgSetters& setters)
         {
             return invoke_indexes<R>(func, args, setters, typename make_index_sequence<std::tuple_size<Args>::value>::type{});
         }
@@ -230,25 +230,25 @@ namespace cpp_mock
             MatcherTuple _predicates;
         };
 
-        bool and_together(bool value)
+        static bool and_together(bool value)
         {
             return value;
         }
 
         template <class Head, class... Tail>
-        bool and_together(Head head, Tail... tail)
+        static bool and_together(Head head, Tail... tail)
         {
             return head && and_together(tail...);
         }
 
         template <class P, class T, std::size_t... I>
-        bool match_argument_indexes(const P& predicates, const T& args, index_sequence<I...>)
+        static bool match_argument_indexes(const P& predicates, const T& args, index_sequence<I...>)
         {
             return and_together(std::get<I>(predicates)(std::get<I>(args))...);
         }
 
         template <class P, class T>
-        bool match_arguments(const P& predicates, const T& args)
+        static bool match_arguments(const P& predicates, const T& args)
         {
             static_assert(
                 std::tuple_size<P>::value == std::tuple_size<T>::value,
@@ -483,14 +483,14 @@ namespace cpp_mock
         };
 
         template <class R, class... Args>
-        method_action_builder<R, Args...> add_action(std::vector<method_action<R, Args...>>& actions)
+        static method_action_builder<R, Args...> add_action(std::vector<method_action<R, Args...>>& actions)
         {
             actions.emplace_back(method_action<R, Args...>());
             return method_action_builder<R, Args...>(&actions.back());
         }
 
         template <class... Args>
-        method_verify_builder<Args...> check_action(
+        static method_verify_builder<Args...> check_action(
             const char* method,
             const char* file,
             std::size_t line,
