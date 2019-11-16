@@ -348,6 +348,7 @@ namespace cpp_mock
             method_action_builder& Return(const R& value)
             {
                 _values.push_back(value);
+                return *this;
             }
 
             method_action_builder& Return(std::initializer_list<R> values)

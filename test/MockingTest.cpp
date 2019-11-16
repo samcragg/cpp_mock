@@ -42,7 +42,7 @@ TEST(MockingTest, TestArrangeDo)
     EXPECT_EQ(123, result);
 }
 
-TEST(MockingTest, TestArrangeReturn)
+TEST(MockingTest, TestArrangeReturnMultiple)
 {
     MockExample example;
 
@@ -55,6 +55,19 @@ TEST(MockingTest, TestArrangeReturn)
     EXPECT_EQ(1, result1);
     EXPECT_EQ(2, result2);
     EXPECT_EQ(2, result3);
+}
+
+TEST(MockingTest, TestArrangeReturnSingle)
+{
+    MockExample example;
+
+    When(example.GetInteger).Return(1);
+
+    int result1 = example.GetInteger();
+    int result2 = example.GetInteger();
+
+    EXPECT_EQ(1, result1);
+    EXPECT_EQ(1, result2);
 }
 
 TEST(MockingTest, TestArrangeSetReference)
