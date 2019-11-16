@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2019-11-16
+
+### Fixed
+- Allow single parameters to `Return`.
+- Prevent linker warning about duplicate symbols.
+
 ## [1.0.0] - 2019-11-15
 
 ### Added
