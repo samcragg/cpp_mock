@@ -23,6 +23,9 @@
     <ClCompile Include="gtest\gtest-all.cc">
       <Filter>test\gtest</Filter>
     </ClCompile>
+    <ClCompile Include="SignatureTest.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\cpp_mock.h">

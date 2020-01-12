@@ -14,7 +14,10 @@ obj/main.o: main.cpp
 obj/MockingTest.o: MockingTest.cpp ../include/cpp_mock.h
 	g++ MockingTest.cpp $(CXXFLAGS) -c -o $@
 
-$(UNIT_TESTS): obj/gtest.o obj/main.o obj/MockingTest.o
+obj/SignatureTest.o: SignatureTest.cpp ../include/cpp_mock.h
+	g++ SignatureTest.cpp $(CXXFLAGS) -c -o $@
+
+$(UNIT_TESTS): obj/gtest.o obj/main.o obj/MockingTest.o obj/SignatureTest.o
 	@mkdir -p bin
 	g++ $^ $(CXXFLAGS) -o $@
 
