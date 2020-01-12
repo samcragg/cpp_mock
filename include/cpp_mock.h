@@ -378,6 +378,73 @@ namespace cpp_mock
         };
 
         template <class... Args>
+        class method_action_builder<void, Args...>
+        {
+        public:
+            explicit method_action_builder(method_action<void, Args...>* action) :
+                _action(action)
+            {
+            }
+
+            method_action_builder(const method_action_builder&) = delete;
+            method_action_builder(method_action_builder&&) = default;
+
+            ~method_action_builder()
+            {
+                if (_action->action == nullptr)
+                {
+                    _action->action = [](const Args& ...) { };
+                }
+
+                if (_action->matcher == nullptr)
+                {
+                    _action->matcher = std::make_shared<
+                        matching::any_method_arguments_matcher<std::tuple<Args...>>>();
+                }
+            }
+
+            method_action_builder& operator=(const method_action_builder&) = delete;
+            method_action_builder& operator=(method_action_builder&&) = default;
+
+            template <class... MatchArgs>
+            method_action_builder& With(MatchArgs&&... args)
+            {
+                static_assert(
+                    sizeof...(MatchArgs) == sizeof...(Args),
+                    "The number of matchers must match the number of arguments");
+
+                using matcher_tuple = typename argument_wrapper<Args...>
+                    ::template match_with<MatchArgs...>::type;
+
+                _action->matcher = std::make_shared<
+                    matching::match_arguments_wrapper<std::tuple<Args...>, matcher_tuple>>(
+                        matcher_tuple(std::forward<MatchArgs>(args)...));
+
+                return *this;
+            }
+
+            method_action_builder& Do(std::function<void(Args & ...)> function)
+            {
+                _action->action = std::move(function);
+                return *this;
+            }
+
+            template <class E, class... ConstructorArgs>
+            method_action_builder& Throw(ConstructorArgs&&... args)
+            {
+                E exception(std::forward<ConstructorArgs>(args)...);
+                _action->action = [=](const Args& ...) -> void
+                {
+                    throw exception;
+                };
+
+                return *this;
+            }
+        private:
+            method_action<void, Args...>* _action;
+        };
+
+        template <class... Args>
         class method_verify_builder
         {
         public:
@@ -498,6 +565,12 @@ namespace cpp_mock
         {
             return method_verify_builder<Args...>(method, file, line, &invocations);
         }
+
+        template <class T>
+        static T return_default()
+        {
+            return T();
+        }
     }
 }
 
@@ -522,7 +595,7 @@ namespace cpp_mock
                 return ::cpp_mock::invoking::invoke<Ret>(it->action, args, setters); \
             } \
         } \
-        return Ret(); \
+        return ::cpp_mock::mocking::return_default<Ret>(); \
     } \
     ::cpp_mock::mocking::mock_method_types<Ret Args>::action_t Name ## _Actions; \
     mutable ::cpp_mock::mocking::mock_method_types<Ret Args>::record_t Name ## _Invocations;
